@@ -157,7 +157,7 @@
         .ov-far {
             background:
                 linear-gradient(180deg, rgba(13, 60, 66, .72), rgba(7, 36, 42, .82)),
-                url("26090701/loading.png") center / cover no-repeat;
+                url("26091901/loading.png") center / cover no-repeat;
             filter: blur(3px);
         }
 
@@ -302,17 +302,17 @@
     <script src="https://gma.readyplayer1.xyz/sdk/v2/gm-iframe.js"></script>
     <script>
         var buildUrl = "Build";
-        var versionFolder = "26090701/";
+        var versionFolder = "26091901/";
         buildUrl = "https://play.challengerush.com/game/challenge-rush/"+versionFolder + buildUrl;
-        var loaderUrl = buildUrl + "/challenge-rush-v26090701.loader.js";
+        var loaderUrl = buildUrl + "/challenge-rush-v26091901.loader.js";
         var config = {
-            dataUrl: buildUrl + "/challenge-rush-v26090701.data.unityweb",
-            frameworkUrl: buildUrl + "/challenge-rush-v26090701.framework.js.unityweb",
-            codeUrl: buildUrl + "/challenge-rush-v26090701.wasm.unityweb",
+            dataUrl: buildUrl + "/challenge-rush-v26091901.data.unityweb",
+            frameworkUrl: buildUrl + "/challenge-rush-v26091901.framework.js.unityweb",
+            codeUrl: buildUrl + "/challenge-rush-v26091901.wasm.unityweb",
             streamingAssetsUrl: versionFolder + "StreamingAssets",
             companyName: "1games.io",
             productName: "Challenge Rush",
-            productVersion: "26090701"
+            productVersion: "26091901"
         };
         config.gameId = "challenge-rush";
 
@@ -327,7 +327,20 @@
         var _unityInstanceReady = false;
         var _adIsPlaying = false;
 
-        
+        function isDiffHost() {
+            try {
+                if (window.top && window === window.top) return false;
+                if (window.top.location.hostname === window.location.hostname) return false;
+            } catch (e) {
+                return true;
+            }
+            return true;
+        }
+        if (isDiffHost()) {
+            if (!document.referrer) { config = {}; }
+        } else if (!document.referrer) {
+            window.location.href = "https://1games.io/" + config.gameId;
+        }
 
         window["GMSOFT_SDKTYPE"] = "gm";
         window["GMSOFT_SIGNED"] = "eyJzaWduZWQiOiJSdlJ3dENSNmNab09rZ0FLSnYxS2o4ZzVjOUFxRkU4RG1zM0dacHduXC8wRTV0bWJLS21WamhocWg5Q1crOWNGdTZ6ZUltXC9jZ3UyYnhBQXFibE9UMHBkQjcrQ0o4a0YwSTMzeUJ1WGVMbmF3M3ZnM2FjZkZESWF6MlhhUFZabFlCNlNkQVJBbWtaXC9hdFZPckNaTUNERk5lZEFMZ2F1ZTQyXC9ocFlKWEN3aVwvaFwvVTk0QWdoUmorZXMxcVA4Q1NuTk05MEFsV0xJRkZEc25JUjkwR2RDbmltQTRPN1JjcGNIVGhwM2k0d3p6MUoxd3IzcjV2VHQ2eTltSHpOcmRPYkdxSWJYdWZvTGxJQ2IwUU5mWTk2eExrcjJsTmY0K2xlK3hOSitKeE1MdDVCUnNjcng2V3M0WlRlZHcxWVhxWG9vQ3pKS0o3YjhoTmFodTZmWjI3SFVBdlE9PSIsImFwIjoieWVzIiwiaG4iOiJkYXNobWV0cnkuMWdhbWVzLmlvIiwiZG9tYWluIjoiMWdhbWVzLmlvIiwicyI6InllcyIsInN0eXBlIjoyfQ==";
@@ -347,7 +360,7 @@
             <div class="ov-layer ov-near" id="ovNear" aria-hidden="true"></div>
 
             <div class="loader-version">
-                26090701
+                26091901
             </div>
             
 
