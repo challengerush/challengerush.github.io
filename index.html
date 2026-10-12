@@ -92,8 +92,12 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="preconnect" href="https://games.1games.io">
-    <link href="https://fonts.googleapis.com/css2?family=Electrolize&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://games.1games.io/lib/1games/theme/challenge-rush/game.css">
+    <link rel="preconnect" href="https://play.challengerush.com">
+    <link rel="preconnect" href="https://challengerush.com">
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Electrolize&display=swap" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Electrolize&display=swap"></noscript>
+    <link rel="preload" as="style" href="https://games.1games.io/lib/1games/theme/challenge-rush/game.css" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="https://games.1games.io/lib/1games/theme/challenge-rush/game.css"></noscript>
     <meta name="robots" content="noindex, nofollow">
     <link rel="canonical" href="https://1games.io/challenge-rush">
     <title>
@@ -220,22 +224,29 @@
 
         
         .load-bar i {
-            display: block; height: 100%; width: 0%; border-radius: 3px;
-            background-image:
-                linear-gradient(45deg,
-                    rgba(255, 255, 255, .16) 25%, rgba(255, 255, 255, 0) 25%,
-                    rgba(255, 255, 255, 0) 50%, rgba(255, 255, 255, .16) 50%,
-                    rgba(255, 255, 255, .16) 75%, rgba(255, 255, 255, 0) 75%),
-                linear-gradient(180deg, var(--gd-green-lt) 0 40%, var(--gd-green) 40% 72%, var(--gd-green-dk) 72%);
-            background-size: 24px 24px, 100% 100%;
+            display: block; height: 100%; width: 0%; border-radius: 3px; position: relative; overflow: hidden;
+            background-image: linear-gradient(180deg, var(--gd-green-lt) 0 40%, var(--gd-green) 40% 72%, var(--gd-green-dk) 72%);
             box-shadow: inset -2px 0 0 rgba(2, 12, 15, .35);
-            animation: gd-load-stripes .58s linear infinite;
             transition: width .25s ease;
         }
 
+        /* the travelling stripes ride an oversized pseudo-element so they move by
+           transform and composite on the GPU, instead of repainting the whole bar
+           as background-position did on every frame of the splash */
+        .load-bar i::after {
+            content: ""; position: absolute; inset: 0 -24px 0 0;
+            background-image: linear-gradient(45deg,
+                rgba(255, 255, 255, .16) 25%, rgba(255, 255, 255, 0) 25%,
+                rgba(255, 255, 255, 0) 50%, rgba(255, 255, 255, .16) 50%,
+                rgba(255, 255, 255, .16) 75%, rgba(255, 255, 255, 0) 75%);
+            background-size: 24px 24px;
+            will-change: transform;
+            animation: gd-load-stripes .58s linear infinite;
+        }
+
         @keyframes gd-load-stripes {
-            from { background-position: 0 0, 0 0; }
-            to   { background-position: 24px 0, 0 0; }
+            from { transform: translate3d(0, 0, 0); }
+            to   { transform: translate3d(24px, 0, 0); }
         }
 
         .gameloader-progress-info {
@@ -291,15 +302,15 @@
 
         @media (prefers-reduced-motion: reduce) {
             .ov-layer { transform: none !important; }
-            .load-bar i { animation: none; }
+            .load-bar i::after { animation: none; }
             
         }
     </style>
 
     
     
-	<script src="https://gma.readyplayer1.xyz/sdk/v3/gm-sdk.js"></script>
-    <script src="https://gma.readyplayer1.xyz/sdk/v3/gm-iframe.js"></script>
+	<script defer src="https://gma.readyplayer1.xyz/sdk/v3/gm-sdk.js"></script>
+    <script defer src="https://gma.readyplayer1.xyz/sdk/v3/gm-iframe.js"></script>
     <script>
         var buildUrl = "Build";
         var versionFolder = "26100901/";
@@ -316,11 +327,16 @@
         };
         config.gameId = "challenge-rush";
 
-		if (window.GMGameSDK) {
-			window.GMGameSDK.init(`${config.gameId}-1games`,"https://gma.readyplayer1.xyz").setVersion(config.productVersion);
-		} else {
-			console.error("Can't init GMSDK");
+		function initGMSDK() {
+			if (window.GMGameSDK) {
+				window.GMGameSDK.init(`${config.gameId}-1games`,"https://gma.readyplayer1.xyz").setVersion(config.productVersion);
+			} else {
+				console.error("Can't init GMSDK");
+			}
 		}
+		// the SDK scripts are deferred, so the global only exists after they run
+		if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initGMSDK);
+		else initGMSDK();
 
         config.eventLog = false;
         var _prerollAdFinished = true;
@@ -337,14 +353,16 @@
             return true;
         }
         if (isDiffHost()) {
+            if (!document.referrer) { config = {}; }
         } else if (!document.referrer) {
+            window.location.href = "https://1games.io/" + config.gameId;
         }
 
         window["GMSOFT_SDKTYPE"] = "gm";
         window["GMSOFT_SIGNED"] = "eyJzaWduZWQiOiJSdlJ3dENSNmNab09rZ0FLSnYxS2o4ZzVjOUFxRkU4RG1zM0dacHduXC8wRTV0bWJLS21WamhocWg5Q1crOWNGdTZ6ZUltXC9jZ3UyYnhBQXFibE9UMHBkQjcrQ0o4a0YwSTMzeUJ1WGVMbmF3M3ZnM2FjZkZESWF6MlhhUFZabFlCNlNkQVJBbWtaXC9hdFZPckNaTUNERk5lZEFMZ2F1ZTQyXC9ocFlKWEN3aVwvaFwvVTk0QWdoUmorZXMxcVA4Q1NuTk05MEFsV0xJRkZEc25JUjkwR2RDbmltQTRPN1JjcGNIVGhwM2k0d3p6MUoxd3IzcjV2VHQ2eTltSHpOcmRPYkdxSWJYdWZvTGxJQ2IwUU5mWTk2eExrcjJsTmY0K2xlK3hOSitKeE1MdDVCUnNjcng2V3M0WlRlZHcxWVhxWG9vQ3pKS0o3YjhoTmFodTZmWjI3SFVBdlE9PSIsImFwIjoieWVzIiwiaG4iOiJkYXNobWV0cnkuMWdhbWVzLmlvIiwiZG9tYWluIjoiMWdhbWVzLmlvIiwicyI6InllcyIsInN0eXBlIjoyfQ==";
     </script>
     
-    <script id="gmsoft-jssdk" src="https://games.1games.io/lib/1games/gmsdkv2.js"></script>
+    <script defer id="gmsoft-jssdk" src="https://games.1games.io/lib/1games/gmsdkv2.js"></script>
 </head>
 
 <body>
@@ -403,8 +421,12 @@
 
       var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-      var IMG = 'https://games.1games.io/lib/1games/theme/challenge-rush/';
+      // set once the splash must never animate again: the game took over, or the boot failed
+      var revealStop = null;
+      window.__crStopSplash = function () { revealStop = true; };
+
       var IMG_FALLBACK = 'https://challengerush.com/template/challenge-rush/img/';
+      var IMG = IMG_FALLBACK;   // games.1games.io 404s every sprite; do not pay a wasted first request
 
       
       (function splashRun() {
@@ -567,15 +589,16 @@
             var ti = 0, buf = -1, bufTap = null;
 
             var take = function () {
-              if (buf >= 0 && t - buf <= 0.12) { var tap = bufTap; buf = -1; bufTap = null; return tap; }
+              if (buf >= 0 && t - buf <= 0.12) return bufTap;
               return null;
             };
+            var commit = function () { buf = -1; bufTap = null; };
 
             while (t < t1 - 1e-9) {
               var local = t - t0;
               while (ti < taps.length && taps[ti].b * BEAT <= local) { buf = t; bufTap = taps[ti]; ti++; }
 
-              step(st, A.mode, V, ceil, t, t0, take);
+              step(st, A.mode, V, ceil, t, t0, take, commit);
               tickAnim(st, A.mode, t);
 
               rec.y.push(st.y); rec.rot.push(st.rot); rec.mode.push(A.mode);
@@ -601,7 +624,7 @@
           st.fi = frameIndex(st.clipTime, CLIP_FPS[clip] || FPS_FALLBACK, frames.length, !CLIP_ONESHOT[clip]);
         }
 
-        function step(st, mode, V, ceil, t, t0, takeTap) {
+        function step(st, mode, V, ceil, t, t0, takeTap, commit) {
           var floorC = V.hb / 2;                           // resting centre on the ground
           var ceilC = ceil != null ? ceil - V.hb / 2 : null;
           var local = t - t0;
@@ -611,6 +634,7 @@
             if (tap && (st.onGround || (tap.orb && st.y < 1.6))) {
               if (tap.pad && st.onGround) pads.push({ t: t });        // drawn where it fired
               if (tap.orb && !st.onGround) orbs.push({ t: t, y: st.y });
+              commit();
               st.vy = V.v; st.onGround = false;
               events.push({ t: t, k: tap.orb ? 'orb' : 'jump', y: st.y });
             }
@@ -637,6 +661,7 @@
                 var from = st.y;
                 st.grav = -st.grav;
                 st.y = st.grav > 0 ? floorC : ceilC;
+                commit();
                 events.push({ t: t, k: 'tele', y: from, y2: st.y });
               }
               st.vy = 0;
@@ -741,12 +766,16 @@
 
         var BONES = { robot: { '01': '12', '02': '123', '03': '12', '04': '12' },
                       spider: { '01': '12', '02': '1', '03': '1', '04': '1' } };
+        var boneCache = {};
         function bone(tex, layer) {
+          var key = tex + '_' + layer;
+          if (key in boneCache) return boneCache[key];
           var m = /^(\w+?)_(\d+)_(\d\d)_1$/.exec(tex);
-          if (!m) return null;
-          var have = BONES[m[1]] && BONES[m[1]][m[3]];
-          if (!have || have.indexOf(String(layer)) < 0) return null;
-          return img('characters/skel/' + m[1] + '_' + m[2] + '_' + m[3] + '_' + layer);
+          var im = null;
+          var have = m && BONES[m[1]] && BONES[m[1]][m[3]];
+          if (have && have.indexOf(String(layer)) >= 0)
+            im = img('characters/skel/' + m[1] + '_' + m[2] + '_' + m[3] + '_' + layer);
+          return (boneCache[key] = im);
         }
 
         function ok(im) { return !!im && im.complete && im.naturalWidth > 0; }
@@ -776,14 +805,18 @@
         }
 
         
-        var P = null, themeNow = '';
+        var P = null, themeNow = '', themeDirty = true, skyGrad = null;
+        function themeTick() {
+          var t = document.documentElement.getAttribute('data-theme') || 'classic';
+          if (themeDirty || t !== themeNow) readTheme();   // getAttribute is cheap; getComputedStyle is not
+        }
         function css(name, fallback) {
           var v = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
           return v || fallback;
         }
         function readTheme() {
           var t = document.documentElement.getAttribute('data-theme') || 'classic';
-          themeNow = t;
+          themeNow = t; themeDirty = false; skyGrad = null;
           var classic = (t === 'classic');
           var accentRgb = css('--accent-rgb', '51, 224, 255');
           P = {
@@ -913,6 +946,7 @@
           W = r.width; H = r.height; U = H / VIEW_H;
           cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
           ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+          skyGrad = null;
         }
 
         function sx(x) { return (x - camX) * U + W * LEAD_X; }
@@ -1104,16 +1138,18 @@
         var lastPhase = -1, dustAcc = 0, exhaustAcc = 0;
 
         function frame(time, dt) {
-          if (themeNow !== document.documentElement.getAttribute('data-theme')) readTheme();
+          themeTick();
           if (!W || !H) resize();
           if (!W || !H) return;
 
           camX = SPEED * time;
           ctx.clearRect(0, 0, W, H);
 
-          var sky = ctx.createLinearGradient(0, 0, 0, H);
-          sky.addColorStop(0, P.sky1); sky.addColorStop(1, P.sky2);
-          ctx.fillStyle = sky; ctx.fillRect(0, 0, W, H);
+          if (!skyGrad) {
+            skyGrad = ctx.createLinearGradient(0, 0, 0, H);
+            skyGrad.addColorStop(0, P.sky1); skyGrad.addColorStop(1, P.sky2);
+          }
+          ctx.fillStyle = skyGrad; ctx.fillRect(0, 0, W, H);
           ctx.fillStyle = P.grid;
           for (var gx = Math.floor(camX / 2) * 2; sx(gx) < W + 4; gx += 2) {
             var xg = sx(gx); if (xg > -4) ctx.fillRect(xg, 0, 1, H);
@@ -1181,8 +1217,8 @@
             var ph = tr % LOOP, ii = idx(ph), md = rec.mode[ii];
             var cols = r === 0 ? [P1, P2] : P.bots[r - 1];
 
-            if (md === 'wave') drawTrail(tr, 'wave', cols[0], 0.30, 0.55);
-            else if (md === 'ship' || md === 'ufo') drawTrail(tr, md, cols[0], 0.11, 0.28);
+            if (md === 'wave') drawTrail(ph, 'wave', cols[0], 0.30, 0.55);
+            else if (md === 'ship' || md === 'ufo') drawTrail(ph, md, cols[0], 0.11, 0.28);
 
             if (r === 0 && (md === 'cube' || md === 'ball')) {
               for (var g = 0; g < GHOSTS.length; g++) {
@@ -1206,10 +1242,18 @@
 
         var T0 = LOOP * 2;
 
-        if (reduce) { frame(T0 + BEAT * 3.4, 0); return; }   // one static, representative frame
+        if (reduce) {
+          try { document.documentElement.style.setProperty('--beat', (BEAT * 2).toFixed(3) + 's'); } catch (e) {}
+          var _staticFrame = function () { if (revealStop) return; resize(); frame(T0 + BEAT * 3.4, 0); };
+          _staticFrame();
+          // one frame lands before the sprites decode and falls back to flat blocks; redraw as art arrives
+          for (var _pi = 0; _pi < 40; _pi++) setTimeout(_staticFrame, 150 * _pi);
+          return;
+        }
 
         var raf = null, base = null, prev = 0;
         function loop(ts) {
+          if (revealStop) { raf = null; return; }         // failed, or the game took over
           if (base === null) { base = ts; prev = 0; }
           if (overlay && overlay.classList.contains('hidden')) { raf = null; return; }  // game took over
           var now = (ts - base) / 1000;
@@ -1252,6 +1296,7 @@
         overlay.addEventListener('pointerleave', function () { px = 0; py = 0; });
 
         function frame() {
+          if (revealStop) { raf = null; return; }         // failed, or the game took over
           if (overlay.classList.contains('hidden')) { raf = null; return; }  // game took over
           t += 0.0076;
           cx += (px - cx) * 0.06;
@@ -1268,7 +1313,7 @@
         document.addEventListener('visibilitychange', function () {
           if (document.hidden) {
             if (raf) { cancelAnimationFrame(raf); raf = null; }
-          } else if (!raf && !overlay.classList.contains('hidden')) {
+          } else if (!raf && !revealStop && !overlay.classList.contains('hidden')) {
             raf = requestAnimationFrame(frame);
           }
         });
@@ -1302,7 +1347,7 @@
             _pShown = Math.abs(d) > 0.2 ? _pShown + d * 0.16 : _pTarget;
             var shown = Math.round(_pShown);
             if (loadFill) loadFill.style.width = _pShown.toFixed(1) + "%";
-            if (loadPct) loadPct.innerText = shown + "%";
+            if (loadPct) loadPct.textContent = shown + "%";
             if (_pShown !== _pTarget && !loadingBar.classList.contains("hidden")) {
                 _pRaf = requestAnimationFrame(pumpProgress);
             }
@@ -1333,6 +1378,7 @@
         function bootFailed(reason, detail) {
             if (_stallTimer) { clearTimeout(_stallTimer); _stallTimer = null; }
             loadingBar.classList.add("failed");
+            try { if (window.__crStopSplash) window.__crStopSplash(); } catch (e) { }
             var msg = document.getElementById("loaderErrorMsg");
             if (msg && detail) msg.setAttribute("title", String(detail));
             console.error("[GMSOFT] boot failed:", reason, detail || "");
@@ -1347,6 +1393,7 @@
                 console.log("[GMSOFT] Both preroll ad finished and Unity ready. Entering game.");
                 loadingBar.classList.add("hidden");
                 loadingBar.style.display = "none";
+                try { if (window.__crStopSplash) window.__crStopSplash(); } catch (e) { }
                 container.style.display = "block";
                 window.focus();
                 try { CRPortal.ready(); } catch (e) { }
